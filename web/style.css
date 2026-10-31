@@ -507,3 +507,53 @@ main { padding-bottom: max(80px, env(safe-area-inset-bottom)); }
 /* Sing & play */
 .date .boss.sing, .boss-banner.sing { background: var(--hi); color: var(--ink); border: 1.5px solid var(--ink); }
 .boss-banner.sing { margin-right: 8px; }
+
+/* ---------- Pitch game ---------- */
+.pg-modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 26px; }
+.pg-mode { text-align: left; padding: 16px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; font-family: var(--type); color: var(--ink); transition: transform .08s; }
+.pg-mode:nth-child(1) { transform: rotate(-.6deg); } .pg-mode:nth-child(3) { transform: rotate(.6deg); }
+.pg-mode:hover { background: var(--hi); }
+.pg-mode .display { font-size: 1.4rem; }
+.pg-game { padding: 22px; margin-bottom: 26px; min-height: 120px; }
+.pg-idle { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+.pg-free { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 260px; max-width: 460px; }
+.pg-free .meter { flex: 1; }
+.pg-note { font-family: var(--display); font-size: 2.6rem; line-height: 1; min-width: 70px; text-align: center; }
+.pg-note sub { font-size: .9rem; color: var(--muted); }
+.pg-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+.pg-score { display: flex; align-items: center; gap: 6px; font-family: var(--display); font-size: 1.4rem; }
+.pg-score svg { height: 22px; }
+.pg-target { text-align: center; margin: 4px 0 14px; }
+.pg-big { font-family: var(--display); font-size: clamp(5rem, 18vw, 8rem); line-height: .9; color: var(--red); }
+.meter { position: relative; height: 34px; border: 2.5px solid var(--ink); background: #fff; overflow: hidden; }
+.meter.big { height: 54px; }
+.meter .zone { position: absolute; top: 0; bottom: 0; left: 35%; width: 30%; background: repeating-linear-gradient(45deg, #ffe94d 0 8px, #fff2a0 8px 16px); border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); }
+.meter.fine .zone { left: 20%; width: 60%; }
+.meter .needle { position: absolute; top: 0; bottom: 0; width: 6px; margin-left: -3px; background: var(--ink); left: 50%; transition: left .08s linear; }
+.meter .needle.ok { background: var(--red); box-shadow: 0 0 0 3px rgba(232,32,42,.25); }
+.meter .needle.off { opacity: .15; }
+.meter .lbl { position: absolute; top: 50%; transform: translateY(-50%); font-family: var(--display); font-size: .75rem; letter-spacing: 1px; color: var(--muted); }
+.meter .lbl.l { left: 8px; } .meter .lbl.r { right: 8px; }
+.pg-hint { text-align: center; font-family: var(--marker); font-size: 1.4rem; margin: 12px 0 8px; min-height: 1.6em; }
+.pg-hint.ok { color: var(--red); }
+.hold { height: 10px; border: 2px solid var(--ink); background: #fff; }
+.hold > div { height: 100%; width: 0; background: var(--red); }
+.pg-you { text-align: center; margin-top: 8px; min-height: 1.4em; }
+.pg-dots { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
+.pg-dots i { width: 16px; height: 16px; border: 2px solid var(--ink); border-radius: 50%; }
+.pg-dots i.hit { background: var(--red); border-color: var(--red); }
+.pg-dots i.miss { background: repeating-linear-gradient(45deg, var(--ink) 0 2px, #fff 2px 4px); }
+.pg-dots i.now { box-shadow: 0 0 0 3px var(--hi); }
+.pg-result { text-align: center; }
+.xp-stamp.sm { font-family: var(--display); font-size: 5rem; color: var(--red); border: 6px double var(--red); display: inline-block; padding: 0 22px; transform: rotate(-6deg); margin: 6px 0 18px; }
+.pg-bars { height: 120px; }
+.pg-nudge { transform: rotate(.6deg); }
+/* voice tuner on the dark stage */
+.player .meter { background: #1a1614; border-color: #5b544c; }
+.player .meter .zone { background: repeating-linear-gradient(45deg, #3d3510 0 8px, #2c270c 8px 16px); border-color: #5b544c; }
+.player .meter .needle { background: var(--cream); }
+.player .meter .needle.ok { background: var(--red); }
+.player .pg-note { text-align: left; margin: 6px 0 10px; }
+.player .pg-note sub { color: #8f877c; }
+.player .metro .hint { margin-top: 8px; }
+.pg-bars .bar { max-width: 34px; }

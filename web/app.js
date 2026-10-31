@@ -31,7 +31,7 @@ const GENERIC_QUESTS = [
   "Spend 5 minutes on your weakest skill. You know which one it is.",
 ];
 
-const XP = { minuteCapPerDay: 120, goalBonus: 20, quest: 25, skill: 50, song: 75, tempoPR: 10, lesson: 30, boss: 120 };
+const XP = { minuteCapPerDay: 120, goalBonus: 20, quest: 25, skill: 50, song: 75, tempoPR: 10, lesson: 30, boss: 120, pitch: 15 };
 
 /* ---------- Date helpers (local time) ---------- */
 
@@ -64,6 +64,8 @@ function defaultState() {
     tempos: [],
     quests: {},
     path: { done: {}, unlocked: {} },
+    pitch: [],
+    voice: { comfy: null },
     seen: null,
   };
 }
@@ -200,12 +202,20 @@ function compute(s) {
   xp += mastered * XP.skill + learned * XP.song + tempoPRs * XP.tempoPR + questsDone * XP.quest
     + lessonsDone * XP.lesson + bossesDone * XP.boss;
 
+  // Pitch game: XP for up to 3 rounds a day
+  const pitch = s.pitch || [];
+  const roundsPerDay = {};
+  for (const r of pitch) roundsPerDay[r.date] = (roundsPerDay[r.date] || 0) + 1;
+  xp += Object.values(roundsPerDay).reduce((a, n) => a + Math.min(3, n), 0) * XP.pitch;
+  const pitchGood = pitch.filter((r) => r.hits / r.total >= 0.75).length;
+  const pitchPerfect = pitch.filter((r) => r.hits === r.total).length;
+
   const totalMin = [...byDay.values()].reduce((a, b) => a + b, 0);
   const cats = new Set(s.sessions.flatMap((x) => x.categories || []));
 
   const c = {
     byDay, frozen, streak, best, freezes, freezesUsed, goalDays, comebacks, weeksHit, weeks,
-    mastered, learned, tempoPRs, topBpm, questsDone, totalMin, lessonsDone, bossesDone, vocalDone, phasesDone,
+    mastered, learned, tempoPRs, topBpm, questsDone, totalMin, lessonsDone, bossesDone, vocalDone, phasesDone, pitchRounds: pitch.length, pitchGood, pitchPerfect,
     days: dates.length, sessions: s.sessions.length, maxDay: Math.max(0, ...byDay.values()), cats: cats.size,
   };
 
@@ -231,6 +241,9 @@ const BADGES = [
   { id: "lesson10", icon: "📚", name: "Student of Rock", desc: "Pass 10 tour dates", target: 10, xp: 50, value: (c) => c.lessonsDone },
   { id: "voice1", icon: "🎤", name: "Found My Voice", desc: "Pass your first sing & play date", target: 1, xp: 20, value: (c) => c.vocalDone },
   { id: "voice6", icon: "📣", name: "Frontperson", desc: "Pass all 6 sing & play dates", target: 6, xp: 150, value: (c) => c.vocalDone },
+  { id: "pitch6", icon: "🎧", name: "In Tune", desc: "Score 6/8 or better in the pitch game", target: 1, xp: 25, value: (c) => c.pitchGood },
+  { id: "pitch8", icon: "💎", name: "Perfect Pitch(ish)", desc: "Score 8/8 in the pitch game", target: 1, xp: 50, value: (c) => c.pitchPerfect },
+  { id: "pitch20", icon: "👂", name: "Golden Ears", desc: "Play 20 rounds of the pitch game", target: 20, xp: 60, value: (c) => c.pitchRounds },
   { id: "first", icon: "🎵", name: "First Strum", desc: "Play your first show", target: 1, xp: 10, value: (c) => c.sessions },
   { id: "s3", icon: "🔥", name: "Hat Trick", desc: "3-day streak", target: 3, xp: 20, value: (c) => c.best },
   { id: "s7", icon: "📅", name: "Week Warrior", desc: "7-day streak", target: 7, xp: 50, value: (c) => c.best },
@@ -435,7 +448,7 @@ function commit() { save(); render(); }
 function render() {
   C = compute(state);
   celebrate(C);
-  renderMast(); renderTonight(); renderTour(); renderSetlist(); renderDiary(); renderBadges(); renderProfile();
+  renderMast(); renderTonight(); renderTour(); renderSetlist(); renderPitch(); renderDiary(); renderBadges(); renderProfile();
 }
 
 function tallySVG(n) {
@@ -530,6 +543,9 @@ function renderTonight() {
           <p class="small" style="margin:10px 0 0">${practiced >= wd ? `<span class="hl">Weekly goal smashed: ${practiced}/${wd} shows.</span>` : `${practiced}/${wd} shows this week.`}
           ${C.streak > 0 && mins === 0 ? ` <b class="red">Your ${C.streak}-night streak ends at midnight unless you play.</b>` : ""}</p>
         </div>
+        <div class="paper side-card pg-nudge"><h3>🎤 Pitch game</h3>
+          <p class="small" style="margin:0 0 10px">A 2-minute ear workout: hear a note, sing it back. ${(state.pitch || []).filter((r) => r.date === t).length ? `Rounds today: <b>${state.pitch.filter((r) => r.date === t).length}</b>.` : "Not played today."}</p>
+          <button class="btn tiny" data-goto="pitch">Play a round →</button></div>
         ${firstVid ? `<div class="paper side-card tape"><h3>Watch before you play</h3>${videoHTML(firstVid)}
           ${song ? `<p class="small" style="margin:10px 0 0">Tonight's song: <b>${esc(song.title)}</b> · tuning: <b>${esc(song.tuning)}</b></p>` : ""}</div>` : ""}
       </aside>
@@ -712,7 +728,8 @@ const M = { bpm: 80, on: false, ctx: null, next: 0, beat: 0, timer: null };
 
 function audio() {
   // iOS 17+: play the metronome even when the ringer switch is on silent
-  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch {}
+  // (but leave it alone while the mic is on, or iOS mutes the mic)
+  try { if (navigator.audioSession && !MIC.on && !MIC.starting) navigator.audioSession.type = "playback"; } catch {}
   M.ctx = M.ctx || new (window.AudioContext || window.webkitAudioContext)();
   if (M.ctx.state === "suspended") M.ctx.resume();
   return M.ctx;
@@ -773,7 +790,10 @@ async function keepAwake(on) {
     } else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
   } catch {}
 }
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") keepAwake(true); });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") keepAwake(true);
+  else if (MIC.on) { if (G.phase !== "idle") quitGame(); else micStop(); } // never leave the mic on in the background
+});
 
 function savePlayer() { try { P ? localStorage.setItem(PLAYER_KEY, JSON.stringify(P)) : localStorage.removeItem(PLAYER_KEY); } catch {} }
 const showMs = () => (P ? P.acc + (P.start ? Date.now() - P.start : 0) : 0);
@@ -802,6 +822,7 @@ function hidePlayer() {
   document.body.style.overflow = "";
   clearInterval(playerTick);
   mStop();
+  micStop();
   keepAwake(false);
   document.title = "Bonsen Plays Guitar";
   render();
@@ -911,6 +932,11 @@ function renderPlayer() {
           <input type="range" id="m-range" min="30" max="260" value="${M.bpm}">
           <div class="hint">Space = pause show · M = metronome · → = next song</div>
         </div>
+        ${l.vocal || /Vocal/.test(stepLabel(l.steps, P.step)) ? `<div class="metro">
+          <div class="metro-top"><span class="display">Voice tuner</span><button class="btn tiny" data-mic>${MIC.on ? "■ Mic off" : "🎤 Mic on"}</button></div>
+          <div class="pg-note" data-vt-note>–</div>
+          <div class="meter fine"><div class="zone"></div><div class="needle off" data-vt-needle></div></div>
+          <div class="hint">Sing or hum. It shows your nearest note, and the needle centres when you're spot on.</div></div>` : ""}
         ${vids.length ? `<h4>WATCH</h4><div class="vids">${vids.map(videoHTML).join("")}</div>` : ""}
         <div class="to-pass"><b>TO PASS:</b>${esc(l.doneWhen)}</div>
       </div>
@@ -954,6 +980,311 @@ function finishShow(pass) {
   confetti();
 }
 
+/* ---------- Voice: mic, pitch detection, pitch game ---------- */
+
+const NOTE_NAMES = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
+const noteName = (midi) => NOTE_NAMES[((Math.round(midi) % 12) + 12) % 12];
+const noteOctave = (midi) => Math.floor(Math.round(midi) / 12) - 1;
+// Distance to the target in cents, ignoring octaves (any octave counts)
+const centsOff = (midi, target) => { const d = (midi - target) * 100; return ((d % 1200) + 1800) % 1200 - 600; };
+const IN_ZONE = 30;      // cents either side that count as "in tune"
+const HOLD_MS = 1000;    // how long to hold the note
+const NOTE_TIMEOUT = 15000;
+const ROUND = 8;
+
+const MIC = { stream: null, an: null, buf: null, raf: 0, on: false, starting: false, hist: [], cur: null, last: 0 };
+
+// YIN pitch detection: returns frequency in Hz, or null for silence / noise
+function detectPitch(buf, sr) {
+  let rms = 0;
+  for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
+  if (Math.sqrt(rms / buf.length) < 0.01) return null;
+  const tauMin = Math.floor(sr / 1100), tauMax = Math.min(Math.floor(sr / 70), buf.length >> 1);
+  const W = buf.length - tauMax;
+  const c = new Float32Array(tauMax + 1);
+  let running = 0;
+  c[0] = 1;
+  for (let tau = 1; tau <= tauMax; tau++) {
+    let sum = 0;
+    for (let i = 0; i < W; i++) { const x = buf[i] - buf[i + tau]; sum += x * x; }
+    running += sum;
+    c[tau] = running ? (sum * tau) / running : 1;
+  }
+  let tau = -1;
+  for (let t = tauMin; t <= tauMax; t++) {
+    if (c[t] < 0.15) { while (t + 1 <= tauMax && c[t + 1] < c[t]) t++; tau = t; break; }
+  }
+  if (tau < 1) return null;
+  const x0 = c[tau - 1], x1 = c[tau], x2 = tau + 1 <= tauMax ? c[tau + 1] : c[tau];
+  const denom = x0 + x2 - 2 * x1;
+  return sr / (denom ? tau + (x0 - x2) / (2 * denom) : tau);
+}
+
+async function micStart() {
+  if (MIC.on || MIC.starting) return MIC.on;
+  MIC.starting = true;
+  try { if (navigator.audioSession) navigator.audioSession.type = "play-and-record"; } catch {}
+  const ctx = audio();
+  try {
+    MIC.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+  } catch {
+    MIC.starting = false;
+    toast("🎤 Couldn't use the microphone. Allow mic access for this site (on iPhone: Settings → Apps → Safari → Microphone), then try again.", 8000);
+    return false;
+  }
+  const src = ctx.createMediaStreamSource(MIC.stream);
+  MIC.an = ctx.createAnalyser();
+  MIC.an.fftSize = 2048;
+  src.connect(MIC.an); // analyser only: never to the speakers, so no feedback
+  MIC.buf = new Float32Array(MIC.an.fftSize);
+  MIC.on = true; MIC.starting = false; MIC.last = performance.now();
+  MIC.raf = requestAnimationFrame(micLoop);
+  micButtons();
+  return true;
+}
+
+function micStop() {
+  if (!MIC.on) return;
+  cancelAnimationFrame(MIC.raf);
+  MIC.stream.getTracks().forEach((t) => t.stop());
+  MIC.on = false; MIC.cur = null; MIC.hist = [];
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch {}
+  tunerFrame();
+  micButtons();
+}
+
+function micLoop(t) {
+  const dt = Math.min(100, t - MIC.last);
+  MIC.last = t;
+  MIC.an.getFloatTimeDomainData(MIC.buf);
+  const f = detectPitch(MIC.buf, M.ctx.sampleRate);
+  if (f) {
+    MIC.hist.push(69 + 12 * Math.log2(f / 440));
+    if (MIC.hist.length > 5) MIC.hist.shift();
+    MIC.cur = [...MIC.hist].sort((a, b) => a - b)[MIC.hist.length >> 1]; // median smooths out glitches
+  } else { MIC.hist = []; MIC.cur = null; }
+  tunerFrame();
+  gameFrame(dt);
+  MIC.raf = requestAnimationFrame(micLoop);
+}
+
+function micButtons() {
+  document.querySelectorAll("[data-mic]").forEach((b) => { b.textContent = MIC.on ? "■ Mic off" : "🎤 Mic on"; });
+}
+
+// Free voice tuner: any element with data-vt-note / data-vt-needle shows the nearest note
+function tunerFrame() {
+  const notes = document.querySelectorAll("[data-vt-note]"), needles = document.querySelectorAll("[data-vt-needle]");
+  if (!notes.length && !needles.length) return;
+  const m = MIC.cur;
+  const cents = m == null ? 0 : (m - Math.round(m)) * 100;
+  notes.forEach((el) => { el.innerHTML = m == null ? (MIC.on ? "…" : "–") : `${noteName(m)}<sub>${noteOctave(m)}</sub>`; });
+  needles.forEach((el) => {
+    el.style.left = `${50 + cents}%`;
+    el.classList.toggle("ok", m != null && Math.abs(cents) <= IN_ZONE);
+    el.classList.toggle("off", m == null);
+  });
+}
+
+// A plucked-string reference note (Karplus-Strong), so it sounds like a guitar, even on a phone speaker
+function pluck(midi, dur = 1.6) {
+  const ctx = audio();
+  const sr = ctx.sampleRate, n = Math.floor(sr * dur);
+  const buffer = ctx.createBuffer(1, n, sr), d = buffer.getChannelData(0);
+  const period = Math.max(2, Math.round(sr / (440 * Math.pow(2, (midi - 69) / 12))));
+  const ring = new Float32Array(period);
+  for (let i = 0; i < period; i++) ring[i] = Math.random() * 2 - 1;
+  for (let i = 0, idx = 0; i < n; i++) {
+    const next = (idx + 1) % period;
+    d[i] = ring[idx];
+    ring[idx] = 0.997 * 0.5 * (ring[idx] + ring[next]);
+    idx = next;
+  }
+  const src = ctx.createBufferSource(), g = ctx.createGain();
+  src.buffer = buffer; g.gain.value = 0.55;
+  src.connect(g).connect(ctx.destination);
+  src.start();
+  return dur * 1000;
+}
+
+const PITCH_MODES = [
+  { id: "strings", name: "Open strings", desc: "Match A, D, G and B, the notes from your guitar. This is the Find Your Voice test.", calibrate: false },
+  { id: "voice", name: "Around your voice", desc: "Notes close to where your voice sits comfortably.", calibrate: true, spread: 4 },
+  { id: "wide", name: "Wider range", desc: "Bigger jumps, low and high. For when the easy ones feel easy.", calibrate: true, spread: 7 },
+];
+
+let G = { phase: "idle" };
+
+function makeTargets(mode) {
+  const out = [];
+  for (let i = 0; i < ROUND; i++) {
+    let t;
+    do {
+      t = mode.id === "strings"
+        ? [45, 50, 55, 59][(Math.random() * 4) | 0]
+        : state.voice.comfy + Math.round((Math.random() * 2 - 1) * mode.spread);
+    } while (out.length && t === out[out.length - 1]);
+    out.push(t);
+  }
+  return out;
+}
+
+async function startGame(modeId) {
+  const mode = PITCH_MODES.find((m) => m.id === modeId);
+  if (!(await micStart())) return;
+  if (mode.calibrate && !state.voice?.comfy) { G = { phase: "calibrate", mode, stable: 0 }; renderGame(); return; }
+  G = { phase: "play", mode, targets: makeTargets(mode), i: 0, hits: 0, hold: 0, log: [], results: [] };
+  renderGame();
+  playTarget(400);
+}
+
+function playTarget(delay = 0) {
+  G.noteStart = performance.now() + delay;
+  G.listenAfter = G.noteStart + 1500; // don't let the mic hear the reference note
+  G.hold = 0;
+  setTimeout(() => { if (G.phase === "play") pluck(G.targets[G.i]); }, delay);
+}
+
+function gameFrame(dt) {
+  if (G.phase === "calibrate") {
+    const m = MIC.cur;
+    if (m != null && G.ref != null && Math.abs(m - G.ref) < 0.6) G.stable += dt; else { G.stable = 0; G.ref = m; }
+    const bar = $("#pg-hold");
+    if (bar) bar.style.width = `${Math.min(100, (G.stable / 1500) * 100)}%`;
+    if (G.stable >= 1500) {
+      state.voice = { comfy: Math.round(G.ref) };
+      save();
+      toast(`Your comfy note is <b>${noteName(G.ref)}${noteOctave(G.ref)}</b>. Targets will sit around it.`);
+      startGame(G.mode.id);
+    }
+    return;
+  }
+  if (G.phase !== "play") return;
+  const now = performance.now();
+  const target = G.targets[G.i];
+  const listening = now >= G.listenAfter;
+  const m = MIC.cur;
+  let cents = null;
+  if (listening && m != null) {
+    cents = centsOff(m, target);
+    G.log.push(cents);
+    if (Math.abs(cents) <= IN_ZONE) G.hold += dt; else G.hold = Math.max(0, G.hold - dt * 0.5);
+  }
+  const needle = $("#pg-needle"), hint = $("#pg-hint"), hold = $("#pg-hold"), you = $("#pg-you");
+  if (needle) {
+    needle.style.left = `${50 + Math.max(-50, Math.min(50, (cents ?? 0) / 2))}%`;
+    needle.classList.toggle("ok", cents != null && Math.abs(cents) <= IN_ZONE);
+    needle.classList.toggle("off", cents == null);
+  }
+  if (hold) hold.style.width = `${Math.min(100, (G.hold / HOLD_MS) * 100)}%`;
+  if (you) you.innerHTML = m == null ? "" : `you: ${noteName(m)}<sub>${noteOctave(m)}</sub>`;
+  if (hint) {
+    hint.textContent = !listening ? "Listen…" : cents == null ? "Sing it: 'ah' or a hum"
+      : Math.abs(cents) <= IN_ZONE ? "That's it. Hold it!" : cents < 0 ? "Too low ↑ sing higher" : "Too high ↓ sing lower";
+    hint.className = `pg-hint ${cents != null && Math.abs(cents) <= IN_ZONE ? "ok" : ""}`;
+  }
+
+  if (G.hold >= HOLD_MS) finishNote(true);
+  else if (now - G.noteStart > NOTE_TIMEOUT) finishNote(false);
+}
+
+function finishNote(hit) {
+  const recent = G.log.slice(-40);
+  G.results.push({ hit, bias: recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : 0 });
+  G.log = [];
+  if (hit) { G.hits++; chime(); }
+  G.i++;
+  if (G.i >= ROUND) { endGame(); return; }
+  renderGame();
+  playTarget(hit ? 700 : 300);
+}
+
+function endGame() {
+  const before = C.xp;
+  const misses = G.results.filter((r) => !r.hit);
+  const all = G.results.map((r) => r.bias);
+  const bias = all.length ? all.reduce((a, b) => a + b, 0) / all.length : 0;
+  state.pitch.push({ date: today(), mode: G.mode.id, hits: G.hits, total: ROUND, bias: Math.round(bias) });
+  G = { ...G, phase: "result", bias, misses: misses.length };
+  commit();
+  G.gained = C.xp - before;
+  renderGame();
+  if (G.hits >= 6) confetti();
+}
+
+function quitGame() { G = { phase: "idle" }; micStop(); renderGame(); }
+
+function renderGame() {
+  const el = $("#pg-game");
+  if (!el) return;
+  if (G.phase === "idle") {
+    el.innerHTML = `<div class="pg-idle">
+      <div><div class="display sm" style="margin:0">Pick a game above</div>
+      <p class="small" style="margin:6px 0 0">Or just sing and watch the needle: it shows your nearest note.</p></div>
+      <div class="pg-free"><div class="pg-note" data-vt-note>–</div>
+        <div class="meter fine"><div class="zone"></div><div class="needle off" data-vt-needle></div></div>
+        <button class="btn tiny" data-mic>${MIC.on ? "■ Mic off" : "🎤 Mic on"}</button></div></div>`;
+    tunerFrame();
+    return;
+  }
+  if (G.phase === "calibrate") {
+    el.innerHTML = `<div class="pg-play"><div class="pg-top"><span class="display sm" style="margin:0">Find your comfy note</span><button class="btn tiny" data-pg="quit">✕</button></div>
+      <p style="font-size:1.15rem">Sing an easy, comfortable "ah" (not high, not low, just your natural speaking-ish note) and hold it steady.</p>
+      <div class="pg-note" data-vt-note>…</div>
+      <div class="hold"><div id="pg-hold"></div></div></div>`;
+    tunerFrame();
+    return;
+  }
+  if (G.phase === "play") {
+    const t = G.targets[G.i];
+    el.innerHTML = `<div class="pg-play">
+      <div class="pg-top"><span class="small">${esc(G.mode.name).toUpperCase()} · NOTE ${G.i + 1} OF ${ROUND}</span>
+        <span class="pg-score">${tallySVG(G.hits)}<b>${G.hits}</b></span>
+        <button class="btn tiny" data-pg="quit">✕ Quit</button></div>
+      <div class="pg-target"><span class="small">SING</span><div class="pg-big">${noteName(t)}</div>
+        <button class="btn tiny" data-pg="again">▶ Hear it again</button></div>
+      <div class="meter big"><div class="zone"></div><div class="needle off" id="pg-needle"></div>
+        <span class="lbl l">LOW</span><span class="lbl r">HIGH</span></div>
+      <div class="pg-hint" id="pg-hint">Listen…</div>
+      <div class="hold"><div id="pg-hold"></div></div>
+      <div class="pg-you small" id="pg-you"></div>
+      <div class="pg-dots">${Array.from({ length: ROUND }, (_, i) => `<i class="${i < G.results.length ? (G.results[i].hit ? "hit" : "miss") : i === G.i ? "now" : ""}"></i>`).join("")}</div>
+      <p class="small muted" style="margin:10px 0 0">Can't hear it? Pluck the same note on your guitar. Any octave counts.</p>
+    </div>`;
+    return;
+  }
+  // result
+  const tip = G.bias < -15 ? "You tend to sing a bit <b>flat</b> (under the note). Think \"up\", lift your eyebrows, and push more breath from your belly."
+    : G.bias > 15 ? "You tend to sing a bit <b>sharp</b> (over the note). Relax, don't push, and let the note settle down into place."
+    : "No consistent lean either way. Your aim is good, so keep doing reps.";
+  el.innerHTML = `<div class="pg-result">
+    <div class="xp-stamp sm">${G.hits}/${ROUND}</div>
+    <p style="font-size:1.15rem;margin:0 0 8px">${G.hits === ROUND ? "Perfect round. Tone deaf? Not you." : G.hits >= 6 ? "In tune! Your ears and voice are talking." : G.hits >= 3 ? "Getting there. This is exactly how it starts." : "Tough round, and that's normal at the start. Try sliding your voice slowly until the needle centres."}</p>
+    <p class="small">${tip}</p>
+    <p class="small">${G.gained > 0 ? `<b class="red">+${G.gained} XP</b>` : "XP limit reached for today (3 rounds). Practice still counts!"}</p>
+    <div class="row" style="justify-content:center"><button class="btn red" data-pg-mode="${G.mode.id}">Play again</button><button class="btn" data-pg="quit">Done</button></div>
+  </div>`;
+  micStop();
+}
+
+function renderPitch() {
+  const rounds = state.pitch || [];
+  const best = (id) => Math.max(0, ...rounds.filter((r) => r.mode === id).map((r) => r.hits));
+  const todayN = rounds.filter((r) => r.date === today()).length;
+  $("#pg-modes").innerHTML = PITCH_MODES.map((m) => `<button class="pg-mode paper" data-pg-mode="${m.id}">
+      <span class="display">${esc(m.name)}</span><span class="small">${esc(m.desc)}</span>
+      <span class="small"><b>Best: ${best(m.id)}/${ROUND}</b></span></button>`).join("");
+  $("#pg-today").textContent = `Today: ${todayN} round${todayN === 1 ? "" : "s"} · XP for the first 3`;
+  $("#pg-comfy").innerHTML = state.voice?.comfy
+    ? `Your comfy note: <b>${noteName(state.voice.comfy)}${noteOctave(state.voice.comfy)}</b> <button class="linkish" data-pg="recal">find it again</button>`
+    : "We'll find your comfy note the first time you play Around your voice.";
+  const recent = rounds.slice(-14);
+  $("#pg-history").innerHTML = recent.length ? `<div class="bars pg-bars">${recent.map((r) =>
+    `<div class="bar" title="${fmtDate(r.date)} · ${r.hits}/${r.total}"><em>${r.hits}</em><div style="height:${(r.hits / r.total) * 100}%"></div><span>${r.mode === "strings" ? "str" : r.mode === "voice" ? "voc" : "wide"}</span></div>`).join("")}</div>`
+    : `<p class="empty">No rounds yet. Your first score is just a starting line.</p>`;
+  if (G.phase === "idle" && !$("#pg-game").innerHTML) renderGame();
+}
+
 /* ---------- Events ---------- */
 
 function setupChips(container, options) {
@@ -962,6 +1293,7 @@ function setupChips(container, options) {
 }
 
 function switchTab(name) {
+  if (name !== "pitch" && (G.phase !== "idle" || MIC.on)) quitGame();
   document.querySelectorAll(".tab").forEach((s) => s.classList.toggle("active", s.id === `tab-${name}`));
   document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   try { localStorage.setItem("bpg-tab", name); } catch {}
@@ -985,6 +1317,15 @@ function bind() {
       return;
     }
     if (q("[data-play]")) { openPlayer(); return; }
+    if ((el = q("[data-pg-mode]"))) { startGame(el.dataset.pgMode); $("#pg-game").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+    if ((el = q("[data-pg]"))) {
+      const a = el.dataset.pg;
+      if (a === "quit") quitGame();
+      else if (a === "again" && G.phase === "play") { G.listenAfter = performance.now() + 1500; G.hold = 0; pluck(G.targets[G.i]); }
+      else if (a === "recal") { state.voice = { comfy: null }; save(); startGame("voice"); }
+      return;
+    }
+    if (q("[data-mic]")) { MIC.on ? micStop() : micStart(); return; }
     if ((el = q("[data-complete]"))) { completeLesson(el.dataset.complete); return; }
     if ((el = q("[data-unlock]"))) { state.path.unlocked[el.dataset.unlock] = true; commit(); return; }
     if ((el = q("[data-ladder]"))) {

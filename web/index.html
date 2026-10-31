@@ -44,6 +44,7 @@
     <button data-tab="tonight" class="active">Tonight</button>
     <button data-tab="tour">The Tour</button>
     <button data-tab="setlist">Setlist</button>
+    <button data-tab="pitch">Pitch Game</button>
     <button data-tab="diary">Gig Diary</button>
     <button data-tab="badges">Badges</button>
     <button data-tab="settings" aria-label="Settings">⚙</button>
@@ -77,6 +78,27 @@
           <button class="btn" type="submit">Add</button>
         </form>
         <div id="requests"></div>
+      </div>
+    </section>
+
+    <section id="tab-pitch" class="tab">
+      <div class="page-head">
+        <h1 class="display">Pitch Game</h1>
+        <p class="type">Hear a note, sing it back, and hold it in the zone for one second. <b>Any octave counts</b>, so it works for every voice. Find a quiet room and turn your volume up. Your voice is analysed on this device only. Nothing is recorded or uploaded.</p>
+        <p class="type small"><span id="pg-today"></span> · <span id="pg-comfy"></span></p>
+      </div>
+      <div class="pg-modes" id="pg-modes"></div>
+      <div class="paper pg-game" id="pg-game"></div>
+      <div class="grid-2">
+        <div class="paper card-pad"><h2 class="display sm">Your last rounds</h2><div id="pg-history"></div></div>
+        <div class="paper card-pad"><h2 class="display sm">How to get better at it</h2>
+          <ul class="type small">
+            <li><b>Hum first,</b> then open up to "ah". Humming is easier to keep in tune.</li>
+            <li><b>Slide into it.</b> Start a little low and glide up until the needle centres. Sliding teaches your voice where notes live.</li>
+            <li><b>Mostly flat?</b> Think "up", lift your eyebrows and use more breath. <b>Mostly sharp?</b> Relax and stop pushing.</li>
+            <li><b>Can't hear the note on your phone speaker?</b> Pluck it on your guitar: the A, D and G strings are those notes. B is the second-thinnest string.</li>
+            <li>Little and often beats long sessions. Three rounds a day earns XP, and that's plenty.</li>
+          </ul></div>
       </div>
     </section>
 
@@ -161,6 +183,7 @@
             <li>Streak bonus: +2 XP per night of your streak (max +30) every day you play</li>
             <li>+30 per lesson passed, +120 bonus for a headline show (boss song)</li>
             <li>+50 per skill, +75 per song crossed off the setlist, +25 per dare, +10 per speed record</li>
+            <li>+15 per pitch game round (up to 3 a day)</li>
             <li>Badges give bonus XP</li>
           </ul>
         </div>

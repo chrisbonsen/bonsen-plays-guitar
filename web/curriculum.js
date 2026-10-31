@@ -80,10 +80,10 @@ const PHASES = [
         steps: [
           [5, "Breathing: lie down with a book on your belly. Breathe in so the book rises (not your shoulders). Then 4 slow breaths: in for 4, out for 8 on a long 'sss'.", "Vocal warm-up"],
           [8, "Lip trills (a motorboat sound), then gentle sirens on 'ooo' from low to high and back down. It should feel easy, so back off if anything scratches."],
-          [8, "Pitch matching: pluck the open A string, listen, hum it, then sing it on 'ah'. Sing into a tuner app, since most will show your voice's note too. Then try the D and G strings."],
+          [8, "Pitch matching: pluck the open A string, listen, hum it, then sing it on 'ah'. The voice tuner on screen shows how close you are. Then try the D and G strings, and finish with a round of the Pitch Game (Open strings)."],
           [4, "Find your range: slide down to your lowest comfortable note and up to your highest without straining. Write both in the session notes."],
         ],
-        doneWhen: "You can sing 'ah' to match the open A, D and G strings, with the tuner reading in tune on 4 out of 5 tries.",
+        doneWhen: "You can score 6/8 or better in the Pitch Game's Open strings mode, which means matching A, D, G and B.",
         topics: ["breathing", "warmup", "pitch"], skills: ["Breathing for singing", "Pitch matching"],
       },
       {
@@ -155,7 +155,7 @@ const PHASES = [
         id: "p2-sing", title: "Sing & strum: hands on autopilot", days: 5, cats: ["Vocals", "Strumming", "Songs"], vocal: true,
         why: "Singing and playing at once feels impossible at first, because your brain wants your hands and your voice to follow the same rhythm. The fix is to make the strumming so automatic you stop thinking about it, then add the words one layer at a time.",
         steps: [
-          [5, "Lip trills ×5, then sing 'ah' to match the open A, D and G strings. Check yourself with the tuner.", "Vocal warm-up"],
+          [5, "Lip trills ×5, then a round of the Pitch Game (Open strings or Around your voice).", "Vocal warm-up"],
           [6, "Strum G-Em-C-D with 4 down strums per chord at 70 BPM, until you can do it while talking about your day. That's autopilot."],
           [7, "Keep strumming and SPEAK the verse lyrics of \"Here's Looking at You, Kid\" in rhythm. Then sing them all on one note. Then sing the real melody."],
           [7, "Capo trick: if the melody feels too high or too low, move the capo a fret or two until it sits comfortably. That fret is your key."],
@@ -487,7 +487,7 @@ const PHASES = [
    (Sing & play lessons have their own warm-up step.) */
 const VOCAL_WARMUPS = [
   "4 slow belly breaths (in for 4, out for 8 on a long 'sss'). Then lip trills (a motorboat sound) from low to high and back, ×5. Then hum along with your open A string.",
-  "Lip trills, low to high, ×5. Then sing 'ah' to match the open A, D and G strings. Check yourself with the tuner app, which shows your voice's note too.",
+  "Lip trills, low to high, ×5. Then sing 'ah' to match the open A, D and G strings, and check yourself on the voice tuner. Or play a round of the Pitch Game.",
   "Sirens on 'ng' (as in 'sing') from your lowest note to your highest and back, ×5. Then sing do-re-mi-fa-so while you play it on the A string (frets 0-2-4-5-7).",
   "Belly 'ha! ha! ha!' pulses ×10, with your stomach doing the work, not your throat. Then 'hey!' calls at medium volume, and lip trills to relax.",
   "Lip trills and sirens. Then play 3-note licks from the pentatonic box and sing each one back.",

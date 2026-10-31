@@ -48,6 +48,7 @@ The **song ladder** has 23 songs by your bands, ordered by difficulty, each with
 - **Wrap-up:** log the minutes, rate the crowd and take tonight's test honestly. Pass it and the next date unlocks.
 - **The tour:** 6 venues (the Garage to the Festival), 37 dates, 6 of them 🎤 sing & play. You can skip ahead if you already know a leg.
 - **Setlist:** the song ladder. Cross songs off as you nail them, and add your own songs as requests.
+- **Pitch game:** hear a note, sing it back, and hold it in the zone. Any octave counts. Modes: Open strings, Around your voice and Wider range. Your voice is analysed on the device only. There's also a live voice tuner in the show during vocal warm-ups.
 - **Gig diary:** streak, calendar, minutes per week, history, speed records and off-tour practice.
 - **Badges:** 32 pin badges.
 - **Streaks:** practise every day to keep the tally going. Every 7 nights in a row earns a **sick note** (max 2), which covers a missed day.
