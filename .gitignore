@@ -1,0 +1,4 @@
+# Your progress stays on your machine
+data/
+.DS_Store
+.claude/

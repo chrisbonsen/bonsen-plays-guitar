@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bonsen Plays Guitar</title>
+  <meta name="theme-color" content="#141210">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bonsen Tour">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e8202a'/><text x='50' y='76' font-size='74' text-anchor='middle' font-family='Impact' fill='%23f1ece1'>B</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Permanent+Marker&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="logo" aria-label="Bonsen">
+      <div class="ransom" id="logo-name"></div>
+      <div class="tour-stamp">WORLD TOUR <span id="tour-year"></span></div>
+    </div>
+    <div class="mast-right">
+      <div class="streak-box" title="Days in a row you've practised">
+        <div class="streak-num"><b id="hud-streak">0</b><span>NIGHT<br>STREAK</span></div>
+        <div class="tally" id="hud-tally"></div>
+      </div>
+      <div class="sicknotes" id="hud-sick" title="Sick notes: if you miss a day, one covers it so your streak survives. Earn one every 7 days in a row (max 2)."></div>
+      <div class="laminate" title="Your level">
+        <div class="lam-hole"></div>
+        <div class="lam-top">ALL ACCESS</div>
+        <div class="lam-lv">LV <b id="hud-level">1</b></div>
+        <div class="lam-title" id="hud-title"></div>
+        <div class="lam-bar"><div id="hud-xpfill"></div></div>
+        <div class="lam-xp" id="hud-xptext"></div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav" id="nav">
+    <button data-tab="tonight" class="active">Tonight</button>
+    <button data-tab="tour">The Tour</button>
+    <button data-tab="setlist">Setlist</button>
+    <button data-tab="diary">Gig Diary</button>
+    <button data-tab="badges">Badges</button>
+    <button data-tab="settings" aria-label="Settings">⚙</button>
+  </nav>
+
+  <main>
+    <section id="tab-tonight" class="tab active">
+      <div id="poster"></div>
+      <div class="route-wrap paper" id="route"></div>
+    </section>
+
+    <section id="tab-tour" class="tab">
+      <div class="page-head">
+        <h1 class="display">The Tour</h1>
+        <p class="type" id="tour-intro"></p>
+      </div>
+      <div id="tour-legs"></div>
+    </section>
+
+    <section id="tab-setlist" class="tab">
+      <div class="page-head">
+        <h1 class="display">The Setlist</h1>
+        <p class="type">23 songs by your bands, from easiest to hardest. Each one shows the phase where you'll have the skills for it, but nobody's stopping you trying one early. Cross songs off once you can play them along with the record.</p>
+      </div>
+      <div class="setlist-sheet" id="ladder"></div>
+      <div class="paper card-pad mt">
+        <h2 class="display sm">Requests <span class="marker red">your own songs</span></h2>
+        <form id="song-form" class="row">
+          <input name="title" placeholder="Song title" required>
+          <input name="artist" placeholder="Artist">
+          <button class="btn" type="submit">Add</button>
+        </form>
+        <div id="requests"></div>
+      </div>
+    </section>
+
+    <section id="tab-diary" class="tab">
+      <div class="page-head"><h1 class="display">Gig Diary</h1></div>
+      <div class="stats" id="stats"></div>
+      <div class="paper card-pad">
+        <h2 class="display sm">Tour dates <span class="type small muted">last 26 weeks</span></h2>
+        <div id="heatmap" class="heatmap"></div>
+        <div class="legend type small">less <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> more · <i class="frozen"></i> sick note used</div>
+      </div>
+      <div class="grid-2">
+        <div class="paper card-pad">
+          <h2 class="display sm">Minutes per week</h2>
+          <div id="weekly-chart" class="bars"></div>
+        </div>
+        <div class="paper card-pad">
+          <h2 class="display sm">Log off-tour practice</h2>
+          <p class="type small muted">Jammed with mates or noodled on the couch? It counts too.</p>
+          <form id="log-form">
+            <div class="row">
+              <label>Date <input type="date" name="date" required></label>
+              <label>Minutes <input type="number" name="minutes" min="1" max="600" required></label>
+            </div>
+            <div class="chips" id="cat-chips"></div>
+            <label>Notes <textarea name="notes" rows="2" placeholder="What happened?"></textarea></label>
+            <button class="btn red wide" type="submit">Log it</button>
+          </form>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="paper card-pad">
+          <h2 class="display sm">Speed</h2>
+          <p class="type small muted">Fastest clean metronome tempo per exercise. +10 XP for each new personal best.</p>
+          <form id="tempo-form" class="row">
+            <input name="exercise" placeholder="Exercise (e.g. Downpicking)" list="tempo-exercises" required>
+            <datalist id="tempo-exercises"></datalist>
+            <input name="bpm" type="number" min="20" max="400" placeholder="BPM" required>
+            <button class="btn" type="submit">Record</button>
+          </form>
+          <div id="tempo-list"></div>
+        </div>
+        <div class="paper card-pad">
+          <h2 class="display sm">Every show so far</h2>
+          <div id="history"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-badges" class="tab">
+      <div class="page-head">
+        <h1 class="display">Badges</h1>
+        <p class="type" id="badge-count"></p>
+      </div>
+      <div class="badge-board" id="badge-grid"></div>
+    </section>
+
+    <section id="tab-settings" class="tab">
+      <div class="page-head"><h1 class="display">Settings</h1></div>
+      <div class="grid-2">
+        <div class="paper card-pad">
+          <div id="profile-box"></div>
+          <form id="settings-form">
+            <label>Your name <input name="name"></label>
+            <div class="row">
+              <label>Show length (minutes/day) <input name="dailyGoal" type="number" min="5" max="240"></label>
+              <label>Shows per week goal <input name="weeklyDays" type="number" min="1" max="7"></label>
+            </div>
+            <button class="btn red" type="submit">Save</button>
+          </form>
+        </div>
+        <div class="paper card-pad">
+          <h2 class="display sm">Your data</h2>
+          <p class="type small" id="data-where"></p>
+          <div class="row">
+            <button class="btn red" id="export-btn">Export backup</button>
+            <label class="btn file-btn">Import<input type="file" id="import-file" accept="application/json"></label>
+          </div>
+          <h2 class="display sm mt">How XP works</h2>
+          <ul class="type small">
+            <li>1 XP per minute played (max 120 a day), +20 for a full-length show</li>
+            <li>Streak bonus: +2 XP per night of your streak (max +30) every day you play</li>
+            <li>+30 per lesson passed, +120 bonus for a headline show (boss song)</li>
+            <li>+50 per skill, +75 per song crossed off the setlist, +25 per dare, +10 per speed record</li>
+            <li>Badges give bonus XP</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- The show: guided session player -->
+  <div class="player" id="player" hidden>
+    <div class="player-inner" id="player-inner"></div>
+  </div>
+
+  <div id="toasts"></div>
+  <canvas id="confetti"></canvas>
+  <script src="library.js"></script>
+  <script src="curriculum.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
