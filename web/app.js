@@ -2,7 +2,7 @@
 
 /* ---------- Constants ---------- */
 
-const CATEGORIES = ["Chords", "Strumming", "Riffs", "Scales", "Technique", "Songs", "Theory", "Improv"];
+const CATEGORIES = ["Chords", "Strumming", "Riffs", "Scales", "Technique", "Songs", "Vocals", "Theory", "Improv"];
 
 // The skill tree mirrors the learning path: one group per phase
 const DEFAULT_SKILLS = PHASES.map((p) => [`${p.icon} ${p.name}`, p.lessons.flatMap((l) => l.skills || [])]);
@@ -55,7 +55,7 @@ const defaultSkills = () => DEFAULT_SKILLS.flatMap(([group, names]) =>
 
 function defaultState() {
   return {
-    version: 2,
+    version: 3,
     settings: { name: "Bonsen", dailyGoal: PROFILE.minutesPerDay, weeklyDays: 5 },
     profile: { ...PROFILE },
     sessions: [],
@@ -69,15 +69,27 @@ function defaultState() {
 }
 
 function migrate(data) {
-  if ((data.version || 1) >= 2) return { ...defaultState(), ...data };
-  // v1 → v2: swap the generic skill tree for the path-based one, keep everything else
-  const mastered = new Set(data.skills.filter((k) => k.status === "mastered").map((k) => k.name));
-  const custom = data.skills.filter((k) => !DEFAULT_SKILLS.some(([, n]) => n.includes(k.name)) && k.status !== "todo");
-  return {
-    ...defaultState(), ...data, version: 2,
-    skills: [...defaultSkills().map((k) => (mastered.has(k.name) ? { ...k, status: "mastered", masteredAt: today() } : k)), ...custom],
-    settings: { ...data.settings, dailyGoal: data.sessions.length ? data.settings.dailyGoal : PROFILE.minutesPerDay },
-  };
+  let s;
+  if ((data.version || 1) >= 2) s = { ...defaultState(), ...data };
+  else {
+    // v1 → v2: swap the generic skill tree for the path-based one, keep everything else
+    const mastered = new Set(data.skills.filter((k) => k.status === "mastered").map((k) => k.name));
+    const custom = data.skills.filter((k) => !DEFAULT_SKILLS.some(([, n]) => n.includes(k.name)) && k.status !== "todo");
+    s = {
+      ...defaultState(), ...data, version: 2,
+      skills: [...defaultSkills().map((k) => (mastered.has(k.name) ? { ...k, status: "mastered", masteredAt: today() } : k)), ...custom],
+      settings: { ...data.settings, dailyGoal: data.sessions.length ? data.settings.dailyGoal : PROFILE.minutesPerDay },
+    };
+  }
+  // v2 → v3: singing added, shows go from 25 to 30 minutes (unless you'd picked your own length)
+  if (s.version < 3) {
+    if (Number(s.settings.dailyGoal) === 25) s.settings = { ...s.settings, dailyGoal: 30 };
+    s.version = 3;
+  }
+  // New lessons bring new skills: add any that are missing
+  const have = new Set(s.skills.map((k) => k.name));
+  for (const k of defaultSkills()) if (!have.has(k.name)) s.skills.push(k);
+  return s;
 }
 
 // Two places progress can live:
@@ -183,6 +195,7 @@ function compute(s) {
   const done = s.path?.done || {};
   const lessonsDone = ALL_LESSONS.filter((l) => done[l.id]).length;
   const bossesDone = ALL_LESSONS.filter((l) => l.boss && done[l.id]).length;
+  const vocalDone = ALL_LESSONS.filter((l) => l.vocal && done[l.id]).length;
   const phasesDone = PHASES.map((p) => p.lessons.every((l) => done[l.id]));
   xp += mastered * XP.skill + learned * XP.song + tempoPRs * XP.tempoPR + questsDone * XP.quest
     + lessonsDone * XP.lesson + bossesDone * XP.boss;
@@ -192,7 +205,7 @@ function compute(s) {
 
   const c = {
     byDay, frozen, streak, best, freezes, freezesUsed, goalDays, comebacks, weeksHit, weeks,
-    mastered, learned, tempoPRs, topBpm, questsDone, totalMin, lessonsDone, bossesDone, phasesDone,
+    mastered, learned, tempoPRs, topBpm, questsDone, totalMin, lessonsDone, bossesDone, vocalDone, phasesDone,
     days: dates.length, sessions: s.sessions.length, maxDay: Math.max(0, ...byDay.values()), cats: cats.size,
   };
 
@@ -216,6 +229,8 @@ const BADGES = [
     target: 1, xp: 50 + i * 30, value: (c) => (c.phasesDone[i] ? 1 : 0),
   })),
   { id: "lesson10", icon: "📚", name: "Student of Rock", desc: "Pass 10 tour dates", target: 10, xp: 50, value: (c) => c.lessonsDone },
+  { id: "voice1", icon: "🎤", name: "Found My Voice", desc: "Pass your first sing & play date", target: 1, xp: 20, value: (c) => c.vocalDone },
+  { id: "voice6", icon: "📣", name: "Frontperson", desc: "Pass all 6 sing & play dates", target: 6, xp: 150, value: (c) => c.vocalDone },
   { id: "first", icon: "🎵", name: "First Strum", desc: "Play your first show", target: 1, xp: 10, value: (c) => c.sessions },
   { id: "s3", icon: "🔥", name: "Hat Trick", desc: "3-day streak", target: 3, xp: 20, value: (c) => c.best },
   { id: "s7", icon: "📅", name: "Week Warrior", desc: "7-day streak", target: 7, xp: 50, value: (c) => c.best },
@@ -269,7 +284,12 @@ const phaseComplete = (p) => p.lessons.every((l) => lessonDone(l.id));
 const phaseUnlocked = (i) => i === 0 || !!state.path.unlocked[PHASES[i].id] || phaseComplete(PHASES[i - 1]);
 const songById = (id) => SONGS.find((s) => s.id === id);
 const lessonById = (id) => ALL_LESSONS.find((l) => l.id === id);
-const stepLabel = (i, n) => (i === 0 ? "Soundcheck" : i === n - 1 && n > 2 ? "Encore" : "Main set");
+function stepLabel(steps, i) {
+  if (steps[i][2]) return steps[i][2] === "Vocal warm-up" ? "🎤 Vocal warm-up" : steps[i][2];
+  const hasGuitarWarmup = steps.some((s) => s[2] === "Guitar warm-up");
+  if (i === steps.findIndex((s) => !s[2]) && !hasGuitarWarmup) return "Soundcheck";
+  return i === steps.length - 1 && steps.length > 2 ? "Encore" : "Main set";
+}
 const fmtClock = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`; };
 const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 
@@ -322,9 +342,8 @@ function songBlockHTML(song, { head = true } = {}) {
 }
 
 function setlistHTML(l) {
-  const n = l.steps.length;
   return `<ol class="setlist">${l.steps.map(([m, t], i) =>
-    `<li><div><span class="sl-label">${stepLabel(i, n)}</span>${esc(t)}</div><span class="sl-min">${m}′</span></li>`).join("")}</ol>`;
+    `<li><div><span class="sl-label">${stepLabel(l.steps, i)}</span>${esc(t)}</div><span class="sl-min">${m}′</span></li>`).join("")}</ol>`;
 }
 
 function lessonBodyHTML(l) {
@@ -344,7 +363,7 @@ function markLessonDone(id) {
     const k = state.skills.find((s) => s.name === name);
     if (k && k.status !== "mastered") { k.status = "mastered"; k.masteredAt = today(); }
   }
-  if (l.song && songById(l.song)) setLadderStatus(l.song, "learned");
+  if (l.song && songById(l.song) && !l.vocal) setLadderStatus(l.song, "learned");
 }
 
 function completeLesson(id) {
@@ -484,6 +503,7 @@ function renderTonight() {
           <div class="presents">${name} presents · leg ${phaseIndex + 1} of ${PHASES.length} · date ${lessonIndex + 1} of ${phase.lessons.length}</div>
           <div><span class="venue">@ ${esc(VENUES[phaseIndex])}</span><span class="tonight">TONIGHT</span></div>
           <h1 class="poster-title">${esc(lesson.title)}</h1>
+          ${lesson.vocal ? `<div class="boss-banner sing">🎤 SING & PLAY 🎤</div>` : ""}
           ${lesson.boss ? `<div class="boss-banner">★ HEADLINE SHOW ★</div>` : ""}
         </div>
         <div class="poster-body">
@@ -538,7 +558,7 @@ function keepOpen(container, draw) {
 
 function renderTour() {
   const cur = currentLesson();
-  $("#tour-intro").textContent = `${PHASES.length} venues, ${ALL_LESSONS.length} dates, about 26 weeks at ${state.settings.dailyGoal} minutes a night. Play each date until you can pass its test, then tick it off. Some dates take longer than suggested, and that's normal.`;
+  $("#tour-intro").textContent = `${PHASES.length} venues, ${ALL_LESSONS.length} dates, about 26 weeks at ${state.settings.dailyGoal} minutes a night (5 of them singing). Play each date until you can pass its test, then tick it off. Some dates take longer than suggested, and that's normal.`;
   const wrap = $("#tour-legs");
   keepOpen(wrap, () => {
     wrap.innerHTML = PHASES.map((p, i) => {
@@ -555,7 +575,7 @@ function renderTour() {
           const here = cur && cur.lesson.id === l.id;
           return `<details class="date ${d ? "done" : ""} ${here ? "next" : ""}" data-id="${l.id}" ${here ? "open" : ""}>
             <summary><span class="n">${pad(j + 1)}</span>
-              <span class="t">${here ? `<span class="hl">${esc(l.title)}</span>` : esc(l.title)}${l.boss ? `<span class="boss">HEADLINER</span>` : ""}</span>
+              <span class="t">${here ? `<span class="hl">${esc(l.title)}</span>` : esc(l.title)}${l.vocal ? `<span class="boss sing">🎤 SING</span>` : ""}${l.boss ? `<span class="boss">HEADLINER</span>` : ""}</span>
               <span class="nights">~${plural(l.days, "night")}</span>
               <span class="st">${d ? `<span class="stamp">Played</span>` : here ? `<span class="stamp">Next up</span>` : ""}</span></summary>
             <div class="date-body">${lessonBodyHTML(l)}
@@ -865,7 +885,7 @@ function renderPlayer() {
     </div>
     <div class="show-grid">
       <div>
-        <div class="now-label">SONG ${P.step + 1} OF ${n} · ${stepLabel(P.step, n).toUpperCase()}</div>
+        <div class="now-label">SONG ${P.step + 1} OF ${n} · ${stepLabel(l.steps, P.step).toUpperCase()}</div>
         <div class="now-text">${esc(text)}</div>
         <div class="countdown" id="p-count">${pad(mins)}:00</div>
         <div class="count-note" id="p-note"></div>
@@ -876,7 +896,7 @@ function renderPlayer() {
           <button class="btn red" data-p="next">${P.step === n - 1 ? "Finish the show →" : "Next song →"}</button>
         </div>
         <div class="show-setlist">${l.steps.map(([m, t], j) => `<button data-p="goto" data-i="${j}" class="${j < P.step ? "done" : j === P.step ? "now" : ""}">
-          <b>${j + 1}. ${stepLabel(j, n)} · ${m}′</b>${esc(t.length > 64 ? t.slice(0, 62) + "…" : t)}</button>`).join("")}</div>
+          <b>${j + 1}. ${stepLabel(l.steps, j)} · ${m}′</b>${esc(t.length > 64 ? t.slice(0, 62) + "…" : t)}</button>`).join("")}</div>
       </div>
       <div>
         <div class="metro">

@@ -307,6 +307,90 @@ const VIDEOS = {
       "author": "JustinGuitar",
       "url": "https://www.youtube.com/watch?v=ixeFsasPjcI"
     }
+  ],
+  "breathing": [
+    {
+      "title": "Breath Support for Singing - CLEARLY & CORRECTLY explained - FINALLY!",
+      "author": "Healthy Vocal Technique",
+      "url": "https://www.youtube.com/watch?v=WR2772TGrgo"
+    },
+    {
+      "title": "Ep. 1 \"4 Breathing Types\" - Voice Lessons To The World",
+      "author": "New York Vocal Coaching",
+      "url": "https://www.youtube.com/watch?v=mDQoMyPmg9s"
+    }
+  ],
+  "warmup": [
+    {
+      "title": "5 MINUTE VOCAL WARM UP",
+      "author": "Jacobs Vocal Academy",
+      "url": "https://www.youtube.com/watch?v=YCLyAmXtpfY"
+    },
+    {
+      "title": "Cheryl Porter's 10 Minute Daily VOCAL WORKOUT (For Singing All Levels!)",
+      "author": "Cheryl Porter Vocal Coach",
+      "url": "https://www.youtube.com/watch?v=9dVW9E40-Gw"
+    }
+  ],
+  "pitch": [
+    {
+      "title": "How to Sing in Tune When Playing Guitar",
+      "author": "JustinGuitar",
+      "url": "https://www.youtube.com/watch?v=twvc8RvgaNg"
+    },
+    {
+      "title": "How To Match Pitch for Beginning Singers - How To Sing: Part 1 | 30 Day Singer",
+      "author": "30 Day Singer",
+      "url": "https://www.youtube.com/watch?v=-PExRMSit_I"
+    }
+  ],
+  "range": [
+    {
+      "title": "How to Use a Guitar Capo to Change a Song's Key",
+      "author": "JustinGuitar",
+      "url": "https://www.youtube.com/watch?v=Ky8uOOfI2tY"
+    },
+    {
+      "title": "How To Find Your Vocal Range & Sing in the Right Key",
+      "author": "Singeo",
+      "url": "https://www.youtube.com/watch?v=grMJpG5UKbo"
+    }
+  ],
+  "singplay": [
+    {
+      "title": "How To Sing And Play Guitar At The Same Time - 10 Step Method Guitar Lesson Singing Tutorial",
+      "author": "JustinGuitar",
+      "url": "https://www.youtube.com/watch?v=29w4RyBjugo"
+    },
+    {
+      "title": "How to Play Guitar and Sing at the Same Time",
+      "author": "Andy Guitar",
+      "url": "https://www.youtube.com/watch?v=ZHeAKSdV8K0"
+    }
+  ],
+  "singplay2": [
+    {
+      "title": "TOP 3 TIPS for Strumming AND Singing at the Same Time",
+      "author": "Lauren Bateman",
+      "url": "https://www.youtube.com/watch?v=NilZXWd2GU0"
+    },
+    {
+      "title": "The TOP Reason Guitarists Struggle to Sing While Playing",
+      "author": "Benjamin Neal Warner",
+      "url": "https://www.youtube.com/watch?v=7BbqLYbC-uw"
+    }
+  ],
+  "rockvoice": [
+    {
+      "title": "Sing Louder Without Strain - CARRYING POWER WITHOUT PUSHING!",
+      "author": "Healthy Vocal Technique",
+      "url": "https://www.youtube.com/watch?v=BMiie0LczfI"
+    },
+    {
+      "title": "How to Sing Punk  (Without KILLING Your Voice) and Three Common Mistakes to Avoid Youtube",
+      "author": "The Career Singer’s Studio",
+      "url": "https://www.youtube.com/watch?v=bJw8sZr4wLE"
+    }
   ]
 };
 

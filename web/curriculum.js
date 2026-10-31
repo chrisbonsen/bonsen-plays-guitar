@@ -1,7 +1,7 @@
 "use strict";
 /*
   Bonsen's learning path.
-  Built for: total beginner, electric guitar, rock & punk, 20–30 min/day.
+  Built for: total beginner, electric guitar, rock & punk, 30 min/day (incl. 5 min of singing).
   Favourite bands: The Flatliners, Rise Against, Jack White, The Gaslight Anthem.
 
   Each lesson:
@@ -16,7 +16,7 @@ const PROFILE = {
   level: "Total beginner",
   guitar: "Electric",
   style: "Rock & punk",
-  minutesPerDay: 25,
+  minutesPerDay: 30,
   artists: ["The Flatliners", "Rise Against", "Jack White", "The Gaslight Anthem"],
 };
 
@@ -73,6 +73,18 @@ const PHASES = [
         ],
         doneWhen: "You can play 1-2-3-4 across all 6 strings and back at 60 BPM, one note per click, without stopping.",
         topics: ["chromatic", "metronome"], skills: ["Spider warm-up", "Play with a metronome"],
+      },
+      {
+        id: "p1-voice", title: "Find your voice", days: 2, cats: ["Vocals"], vocal: true,
+        why: "Anyone can learn to sing in tune. It's a skill, not a gift. Today you find where your voice sits, and you learn to check yourself with a tuner.",
+        steps: [
+          [5, "Breathing: lie down with a book on your belly. Breathe in so the book rises (not your shoulders). Then 4 slow breaths: in for 4, out for 8 on a long 'sss'.", "Vocal warm-up"],
+          [8, "Lip trills (a motorboat sound), then gentle sirens on 'ooo' from low to high and back down. It should feel easy, so back off if anything scratches."],
+          [8, "Pitch matching: pluck the open A string, listen, hum it, then sing it on 'ah'. Sing into a tuner app, since most will show your voice's note too. Then try the D and G strings."],
+          [4, "Find your range: slide down to your lowest comfortable note and up to your highest without straining. Write both in the session notes."],
+        ],
+        doneWhen: "You can sing 'ah' to match the open A, D and G strings, with the tuner reading in tune on 4 out of 5 tries.",
+        topics: ["breathing", "warmup", "pitch"], skills: ["Breathing for singing", "Pitch matching"],
       },
       {
         id: "p1-sna", title: "First riff: Seven Nation Army", days: 4, cats: ["Songs", "Riffs"],
@@ -138,6 +150,18 @@ const PHASES = [
         ],
         doneWhen: "You can play all 7 chords (Em A D G C E Am) cleanly, with 30+ changes a minute on G ↔ C.",
         topics: ["chords", "changes"], skills: ["G major", "C major", "E major", "A minor"],
+      },
+      {
+        id: "p2-sing", title: "Sing & strum: hands on autopilot", days: 5, cats: ["Vocals", "Strumming", "Songs"], vocal: true,
+        why: "Singing and playing at once feels impossible at first, because your brain wants your hands and your voice to follow the same rhythm. The fix is to make the strumming so automatic you stop thinking about it, then add the words one layer at a time.",
+        steps: [
+          [5, "Lip trills ×5, then sing 'ah' to match the open A, D and G strings. Check yourself with the tuner.", "Vocal warm-up"],
+          [6, "Strum G-Em-C-D with 4 down strums per chord at 70 BPM, until you can do it while talking about your day. That's autopilot."],
+          [7, "Keep strumming and SPEAK the verse lyrics of \"Here's Looking at You, Kid\" in rhythm. Then sing them all on one note. Then sing the real melody."],
+          [7, "Capo trick: if the melody feels too high or too low, move the capo a fret or two until it sits comfortably. That fret is your key."],
+        ],
+        doneWhen: "You can strum and sing one full verse and chorus without your strumming stopping or speeding up.",
+        topics: ["singplay", "singplay2", "range"], song: "heres-looking-at-you-kid", skills: ["Sing & strum", "Pick your key with a capo"],
       },
       {
         id: "p2-song", title: "Chord song: Hotel Yorba", days: 5, cats: ["Songs", "Chords"],
@@ -213,6 +237,18 @@ const PHASES = [
         topics: ["downpicking", "metronome"], skills: ["Downpicking @150"],
       },
       {
+        id: "p3-sing", title: "Sing over power chords", days: 4, cats: ["Vocals", "Chords"], vocal: true,
+        why: "This is the punk singer-guitarist's main job: chugging eighth notes while singing on top. The trick is that your picking hand never changes, whatever your voice is doing.",
+        steps: [
+          [5, "Sirens on 'ng' (as in 'sing') from your lowest note to your highest and back, ×5. Then sing do-re-mi-fa-so while you play it on the A string (frets 0-2-4-5-7).", "Vocal warm-up"],
+          [7, "Palm-muted eighth-note downstrokes on A5 at 90 BPM. Count \"1-and-2-and\" out loud as you play. Counting out loud is singing practice in disguise."],
+          [8, "Stay on A5 and sing any long notes on top, keeping the chug steady underneath. Then try a line from any song you know."],
+          [5, "Play the Great Expectations chorus and sing just the last word of each line. Add more words each day."],
+        ],
+        doneWhen: "You can sing the whole Great Expectations chorus over the palm-muted power chords without the chugging stopping.",
+        topics: ["singplay2", "pitch"], song: "great-expectations", skills: ["Sing over power chords"],
+      },
+      {
         id: "p3-song", title: "Power chord song: Great Expectations", days: 6, cats: ["Songs", "Chords"],
         why: "This is The Gaslight Anthem at full tilt: driving power chords and steady downstrokes, in standard tuning. It's everything you just learned. Ignore the lead guitar part for now.",
         steps: [
@@ -273,6 +309,18 @@ const PHASES = [
         ],
         doneWhen: "You've written down a full song map for your next song and can play along with the first verse and chorus.",
         skills: ["Song structure"],
+      },
+      {
+        id: "p4-voice", title: "Punk voice, safely", days: 4, cats: ["Vocals"], vocal: true,
+        why: "Punk vocals are loud, but singers who last for decades get their power from breath support, not from a squeezed throat. Learn this now and you can belt a chorus night after night. If your throat ever hurts, stop for the day. Screaming isn't part of this plan.",
+        steps: [
+          [5, "Belly pulses: 'ha! ha! ha!' ×10. Your stomach kicks in and your throat stays loose. Then lip trills to relax.", "Vocal warm-up"],
+          [7, "'Hey!' calls: start at speaking volume and get louder in 4 steps, keeping the same easy feeling in your throat. Stop at the volume where it starts to scratch. That's your limit for now."],
+          [8, "Sing the Savior chorus along with the record, loud and supported from your belly. Then try it while playing the chords."],
+          [5, "Cool down: gentle humming slides from high to low, then a big glass of water."],
+        ],
+        doneWhen: "You can sing the Savior chorus at full volume along with the record 3 times through, with no scratchiness or soreness afterwards.",
+        topics: ["rockvoice", "breathing"], song: "savior", skills: ["Supported rock voice"],
       },
       {
         id: "p4-song", title: "Rise Against: Savior", days: 7, cats: ["Songs"],
@@ -337,6 +385,18 @@ const PHASES = [
         topics: ["pentatonic"], skills: ["12-bar blues", "Improvise a solo"],
       },
       {
+        id: "p5-sing", title: "Sing what you play", days: 3, cats: ["Vocals", "Riffs"], vocal: true,
+        why: "Singing a riff while you play it connects your ears to your fingers. It's the best ear training there is. Seven Nation Army is the riff entire football stadiums sing, so it's the perfect place to start.",
+        steps: [
+          [5, "Lip trills and sirens. Then play 3-note licks from the pentatonic box and sing each one back.", "Vocal warm-up"],
+          [8, "Play the Seven Nation Army riff and sing it on 'oh' at the same time. No words, just match the notes."],
+          [7, "Play a pentatonic lick, sing it back without the guitar, then play and sing it together. Make up 5 licks."],
+          [5, "Hum along to your blues shuffle and make up a vocal line over it."],
+        ],
+        doneWhen: "You can play and sing the Seven Nation Army riff together, in tune, 4 times through.",
+        topics: ["pitch"], song: "seven-nation-army", skills: ["Sing what you play"],
+      },
+      {
         id: "p5-song", title: "Jack White riff: Icky Thump", days: 7, cats: ["Songs", "Riffs"],
         why: "This is a monster single-note riff with bends, and pure Jack White. Learn the main riff first at 60–70% speed. The solo and Whammy-pedal parts are a bonus for later.",
         steps: [
@@ -398,6 +458,17 @@ const PHASES = [
         song: "the-59-sound", skills: ["Barre chord song"],
       },
       {
+        id: "p6-front", title: "Front the band", days: 7, cats: ["Vocals", "Songs"], vocal: true, boss: true,
+        why: "The singer-guitarist's final exam: one whole song, sung and played from start to finish, like you're on stage.",
+        steps: [
+          [5, "The full routine: breaths, lip trills, 'ng' sirens and 'ha' pulses.", "Vocal warm-up"],
+          [10, "Pick your song: The '59 Sound, Here's Looking at You, Kid or Swing Life Away. Set the capo to your key, then work through it section by section, singing and playing."],
+          [10, "Full run-through. Record yourself on your phone and listen back."],
+        ],
+        doneWhen: "You can sing and play a whole song start to finish without stopping, and you'd be happy to send the recording to a friend.",
+        topics: ["singplay", "range", "rockvoice"], song: "the-59-sound", skills: ["Sing & play a whole song"],
+      },
+      {
         id: "p6-flatliners", title: "FINAL BOSS: The Flatliners – Monumental", days: 10, cats: ["Songs"],
         why: "This is fast, melodic Canadian punk at 154 BPM. Learn the Guitar 1 rhythm part as power chords. If you can play this along with the record, you're officially a punk rhythm guitarist.",
         steps: [
@@ -411,5 +482,29 @@ const PHASES = [
     ],
   },
 ];
+
+/* A 5-minute vocal warm-up opens every guitar lesson. It builds up over the tour.
+   (Sing & play lessons have their own warm-up step.) */
+const VOCAL_WARMUPS = [
+  "4 slow belly breaths (in for 4, out for 8 on a long 'sss'). Then lip trills (a motorboat sound) from low to high and back, ×5. Then hum along with your open A string.",
+  "Lip trills, low to high, ×5. Then sing 'ah' to match the open A, D and G strings. Check yourself with the tuner app, which shows your voice's note too.",
+  "Sirens on 'ng' (as in 'sing') from your lowest note to your highest and back, ×5. Then sing do-re-mi-fa-so while you play it on the A string (frets 0-2-4-5-7).",
+  "Belly 'ha! ha! ha!' pulses ×10, with your stomach doing the work, not your throat. Then 'hey!' calls at medium volume, and lip trills to relax.",
+  "Lip trills and sirens. Then play 3-note licks from the pentatonic box and sing each one back.",
+  "The full routine. Breaths, lip trills, 'ng' sirens and 'ha' pulses, then sing one verse of any song at half volume.",
+];
+// ...and sing & play lessons get a guitar warm-up so your hands stay in shape
+const GUITAR_WARMUPS = [
+  "Spider 1-2-3-4 across all strings at 60 BPM.",
+  "One-minute changes on your weakest chord pair.",
+  "Palm-muted downpicking on the low E string. Start at 120 BPM and go up 5 BPM per minute.",
+  "Fast power chord changes every 2 beats, starting at 120 BPM.",
+  "Pentatonic box 1 up and down at 80 BPM, then a few bends.",
+  "One-minute changes on Am ↔ F and G ↔ Bm.",
+];
+PHASES.forEach((p, i) => p.lessons.forEach((l) => {
+  if (l.vocal) l.steps.splice(1, 0, [5, GUITAR_WARMUPS[i], "Guitar warm-up"]);
+  else l.steps = [[5, VOCAL_WARMUPS[i], "Vocal warm-up"], ...l.steps];
+}));
 
 const ALL_LESSONS = PHASES.flatMap((p) => p.lessons.map((l) => ({ ...l, phase: p.id })));

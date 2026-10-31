@@ -24,19 +24,19 @@ On the Mac version, everything is saved in `data/progress.json`, and a daily bac
 Settings → Export / Import also works for backups.
 
 ## Your learning path
-A 6-phase, ~26-week plan for a total beginner on electric guitar, heading for rock and punk, at 20–30 min a day.
+A 6-phase, ~26-week plan for a total beginner on electric guitar, heading for rock and punk, with singing while you play. 30 minutes a day, 5 of them singing.
 It's built around The Flatliners, Rise Against, Jack White and The Gaslight Anthem.
 
 | Phase | Weeks | You learn | Boss song |
 |---|---|---|---|
-| 🔌 Plug In | 1–2 | Gear, tuning, tab, spider warm-up | Seven Nation Army (riff) |
-| 🎼 First Chords | 3–6 | 7 open chords, one-minute changes, strumming | Hotel Yorba |
-| ⚡ Power Up | 7–10 | Power chords, palm muting, string muting, downpicking | Great Expectations |
-| 🏎️ Punk Engine | 11–14 | Alternate picking, fast changes, E♭/Drop D tuning, song maps | Savior |
-| 🎸 Riffs & Lead | 15–19 | Hammer-ons, slides, pentatonic, bends, blues | Icky Thump (riff) |
-| 🏟️ Full Band | 20–26 | F and Bm barre chords, speed building | Monumental (Flatliners) |
+| 🔌 Plug In | 1–2 | Gear, tuning, tab, spider warm-up, 🎤 find your voice | Seven Nation Army (riff) |
+| 🎼 First Chords | 3–6 | 7 open chords, one-minute changes, strumming, 🎤 sing & strum | Hotel Yorba |
+| ⚡ Power Up | 7–10 | Power chords, palm muting, string muting, downpicking, 🎤 sing over power chords | Great Expectations |
+| 🏎️ Punk Engine | 11–14 | Alternate picking, fast changes, E♭/Drop D tuning, song maps, 🎤 punk voice (safely) | Savior |
+| 🎸 Riffs & Lead | 15–19 | Hammer-ons, slides, pentatonic, bends, blues, 🎤 sing what you play | Icky Thump (riff) |
+| 🏟️ Full Band | 20–26 | F and Bm barre chords, speed building, 🎤 front the band | Monumental (Flatliners) |
 
-Every lesson has a ~25-minute session plan, a **"Done when"** test, and lesson videos.
+Every lesson has a 30-minute session plan that opens with a vocal warm-up, a **"Done when"** test, and lesson videos.
 The **song ladder** has 23 songs by your bands, ordered by difficulty, each with its tuning, a beginner tip, a lesson video and a tab.
 
 - Lessons are in `web/curriculum.js`
@@ -46,7 +46,7 @@ The **song ladder** has 23 songs by your bands, ordered by difficulty, each with
 - **Tonight:** today's lesson as a gig poster. Hit **▶ PLAY THE SHOW**.
 - **The show:** a full-screen guided session, with a countdown per step, a built-in metronome (it sets itself from steps that say "at 70 BPM") and the lesson videos. Keys: Space = pause, M = metronome, → = next step.
 - **Wrap-up:** log the minutes, rate the crowd and take tonight's test honestly. Pass it and the next date unlocks.
-- **The tour:** 6 venues (the Garage to the Festival), 31 dates. You can skip ahead if you already know a leg.
+- **The tour:** 6 venues (the Garage to the Festival), 37 dates, 6 of them 🎤 sing & play. You can skip ahead if you already know a leg.
 - **Setlist:** the song ladder. Cross songs off as you nail them, and add your own songs as requests.
 - **Gig diary:** streak, calendar, minutes per week, history, speed records and off-tour practice.
 - **Badges:** 32 pin badges.

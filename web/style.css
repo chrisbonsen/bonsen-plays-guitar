@@ -503,3 +503,7 @@ input:focus, textarea:focus { outline: none; background: #fffbe0; box-shadow: 3p
 main { padding-bottom: max(80px, env(safe-area-inset-bottom)); }
 #toasts { bottom: max(20px, env(safe-area-inset-bottom)); }
 @media (hover: none) { .btn, .play-btn, .nav button, .chip { -webkit-tap-highlight-color: transparent; } }
+
+/* Sing & play */
+.date .boss.sing, .boss-banner.sing { background: var(--hi); color: var(--ink); border: 1.5px solid var(--ink); }
+.boss-banner.sing { margin-right: 8px; }
