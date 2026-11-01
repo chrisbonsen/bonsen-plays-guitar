@@ -1,7 +1,7 @@
 "use strict";
 /*
   Bonsen's learning path.
-  Built for: total beginner, electric guitar, rock & punk, 30 min/day (incl. 5 min of singing).
+  Built for: total beginner, electric guitar, rock & punk, 25 min/day + an optional 5 min of singing.
   Favourite bands: The Flatliners, Rise Against, Jack White, The Gaslight Anthem.
 
   Each lesson:
@@ -16,7 +16,7 @@ const PROFILE = {
   level: "Total beginner",
   guitar: "Electric",
   style: "Rock & punk",
-  minutesPerDay: 30,
+  minutesPerDay: 25,
   artists: ["The Flatliners", "Rise Against", "Jack White", "The Gaslight Anthem"],
 };
 
@@ -483,8 +483,8 @@ const PHASES = [
   },
 ];
 
-/* A 5-minute vocal warm-up opens every guitar lesson. It builds up over the tour.
-   (Sing & play lessons have their own warm-up step.) */
+/* An optional 5-minute vocal warm-up opens every guitar lesson. It builds up over the tour.
+   (Sing & play lessons are bonus dates and have their own warm-up step.) */
 const VOCAL_WARMUPS = [
   "4 slow belly breaths (in for 4, out for 8 on a long 'sss'). Then lip trills (a motorboat sound) from low to high and back, ×5. Then hum along with your open A string.",
   "Lip trills, low to high, ×5. Then sing 'ah' to match the open A, D and G strings, and check yourself on the voice tuner. Or play a round of the Pitch Game.",
@@ -504,7 +504,7 @@ const GUITAR_WARMUPS = [
 ];
 PHASES.forEach((p, i) => p.lessons.forEach((l) => {
   if (l.vocal) l.steps.splice(1, 0, [5, GUITAR_WARMUPS[i], "Guitar warm-up"]);
-  else l.steps = [[5, VOCAL_WARMUPS[i], "Vocal warm-up"], ...l.steps];
+  else l.steps = [[5, VOCAL_WARMUPS[i], "Vocal warm-up (optional)"], ...l.steps];
 }));
 
 const ALL_LESSONS = PHASES.flatMap((p) => p.lessons.map((l) => ({ ...l, phase: p.id })));

@@ -55,7 +55,7 @@ const defaultSkills = () => DEFAULT_SKILLS.flatMap(([group, names]) =>
 
 function defaultState() {
   return {
-    version: 3,
+    version: 4,
     settings: { name: "Bonsen", dailyGoal: PROFILE.minutesPerDay, weeklyDays: 5 },
     profile: { ...PROFILE },
     sessions: [],
@@ -83,10 +83,10 @@ function migrate(data) {
       settings: { ...data.settings, dailyGoal: data.sessions.length ? data.settings.dailyGoal : PROFILE.minutesPerDay },
     };
   }
-  // v2 → v3: singing added, shows go from 25 to 30 minutes (unless you'd picked your own length)
-  if (s.version < 3) {
-    if (Number(s.settings.dailyGoal) === 25) s.settings = { ...s.settings, dailyGoal: 30 };
-    s.version = 3;
+  // v3 → v4: singing became optional, so shows go back to 25 minutes (+5 optional vocals)
+  if (s.version < 4) {
+    if (Number(s.settings.dailyGoal) === 30) s.settings = { ...s.settings, dailyGoal: 25 };
+    s.version = 4;
   }
   // New lessons bring new skills: add any that are missing
   const have = new Set(s.skills.map((k) => k.name));
@@ -198,7 +198,8 @@ function compute(s) {
   const lessonsDone = ALL_LESSONS.filter((l) => done[l.id]).length;
   const bossesDone = ALL_LESSONS.filter((l) => l.boss && done[l.id]).length;
   const vocalDone = ALL_LESSONS.filter((l) => l.vocal && done[l.id]).length;
-  const phasesDone = PHASES.map((p) => p.lessons.every((l) => done[l.id]));
+  const phasesDone = PHASES.map((p) => p.lessons.every((l) => l.vocal || done[l.id])); // 🎤 dates are bonus
+  const requiredDone = ALL_LESSONS.filter((l) => !l.vocal && done[l.id]).length;
   xp += mastered * XP.skill + learned * XP.song + tempoPRs * XP.tempoPR + questsDone * XP.quest
     + lessonsDone * XP.lesson + bossesDone * XP.boss;
 
@@ -215,7 +216,7 @@ function compute(s) {
 
   const c = {
     byDay, frozen, streak, best, freezes, freezesUsed, goalDays, comebacks, weeksHit, weeks,
-    mastered, learned, tempoPRs, topBpm, questsDone, totalMin, lessonsDone, bossesDone, vocalDone, phasesDone, pitchRounds: pitch.length, pitchGood, pitchPerfect,
+    mastered, learned, tempoPRs, topBpm, questsDone, totalMin, lessonsDone, requiredDone, bossesDone, vocalDone, phasesDone, pitchRounds: pitch.length, pitchGood, pitchPerfect,
     days: dates.length, sessions: s.sessions.length, maxDay: Math.max(0, ...byDay.values()), cats: cats.size,
   };
 
@@ -293,12 +294,15 @@ function questFor(date) {
 const VENUES = ["The Garage", "The Basement", "The Dive Bar", "The Club", "The Theatre", "The Festival"];
 
 const lessonDone = (id) => !!state.path.done[id];
-const phaseComplete = (p) => p.lessons.every((l) => lessonDone(l.id));
+const phaseComplete = (p) => p.lessons.every((l) => l.vocal || lessonDone(l.id));
+const REQUIRED = ALL_LESSONS.filter((l) => !l.vocal);
+const isOptional = (step) => step[2] === "Vocal warm-up (optional)";
+const showMinutes = (l) => l.steps.reduce((a, s) => a + (isOptional(s) ? 0 : s[0]), 0);
 const phaseUnlocked = (i) => i === 0 || !!state.path.unlocked[PHASES[i].id] || phaseComplete(PHASES[i - 1]);
 const songById = (id) => SONGS.find((s) => s.id === id);
 const lessonById = (id) => ALL_LESSONS.find((l) => l.id === id);
 function stepLabel(steps, i) {
-  if (steps[i][2]) return steps[i][2] === "Vocal warm-up" ? "🎤 Vocal warm-up" : steps[i][2];
+  if (steps[i][2]) return steps[i][2].startsWith("Vocal") ? `🎤 ${steps[i][2]}` : steps[i][2];
   const hasGuitarWarmup = steps.some((s) => s[2] === "Guitar warm-up");
   if (i === steps.findIndex((s) => !s[2]) && !hasGuitarWarmup) return "Soundcheck";
   return i === steps.length - 1 && steps.length > 2 ? "Encore" : "Main set";
@@ -309,8 +313,19 @@ const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
 function currentLesson() {
   for (let i = 0; i < PHASES.length; i++) {
     if (!phaseUnlocked(i)) continue;
-    const idx = PHASES[i].lessons.findIndex((l) => !lessonDone(l.id));
-    if (idx >= 0) return { phase: PHASES[i], phaseIndex: i, lesson: PHASES[i].lessons[idx], lessonIndex: idx };
+    const req = PHASES[i].lessons.filter((l) => !l.vocal);
+    const idx = req.findIndex((l) => !lessonDone(l.id));
+    if (idx >= 0) return { phase: PHASES[i], phaseIndex: i, lesson: req[idx], lessonIndex: idx, count: req.length };
+  }
+  return null;
+}
+
+// The next 🎤 bonus date you haven't played, in any open venue
+function nextBonus() {
+  for (let i = 0; i < PHASES.length; i++) {
+    if (!phaseUnlocked(i)) continue;
+    const l = PHASES[i].lessons.find((x) => x.vocal && !lessonDone(x.id));
+    if (l) return { lesson: l, phaseIndex: i };
   }
   return null;
 }
@@ -491,7 +506,10 @@ function renderTonight() {
       <button class="play-btn" data-goto="setlist">Pick your next song</button></div></article>`;
   } else {
     const { phase, phaseIndex, lesson, lessonIndex } = cur;
-    const total = lesson.steps.reduce((a, [m]) => a + m, 0);
+    const total = showMinutes(lesson);
+    const extra = lesson.steps.filter(isOptional).reduce((a, [m]) => a + m, 0);
+    const bonus = nextBonus();
+    const bonusResuming = bonus && P && P.mode === "show" && P.lessonId === bonus.lesson.id;
     const song = lesson.song && songById(lesson.song);
     const vids = lessonVideos(lesson);
     const firstVid = vids[0] || song?.lesson;
@@ -513,7 +531,7 @@ function renderTonight() {
       <article class="poster paper tape">
         ${mins > 0 ? `<div class="stamp played-stamp">Played tonight · ${mins} min</div>` : ""}
         <div class="poster-head">
-          <div class="presents">${name} presents · leg ${phaseIndex + 1} of ${PHASES.length} · date ${lessonIndex + 1} of ${phase.lessons.length}</div>
+          <div class="presents">${name} presents · leg ${phaseIndex + 1} of ${PHASES.length} · date ${lessonIndex + 1} of ${cur.count}</div>
           <div><span class="venue">@ ${esc(VENUES[phaseIndex])}</span><span class="tonight">TONIGHT</span></div>
           <h1 class="poster-title">${esc(lesson.title)}</h1>
           ${lesson.vocal ? `<div class="boss-banner sing">🎤 SING & PLAY 🎤</div>` : ""}
@@ -521,7 +539,7 @@ function renderTonight() {
         </div>
         <div class="poster-body">
           <p class="poster-why">${esc(lesson.why)}</p>
-          <div class="doors"><span class="display sm" style="margin:0">The setlist</span><span class="stamp">Doors · ${total} min</span></div>
+          <div class="doors"><span class="display sm" style="margin:0">The setlist</span><span class="stamp">Doors · ${total} min${extra ? ` +${extra} 🎤` : ""}</span></div>
           ${setlistHTML(lesson)}
           <div class="to-pass"><b>TO PASS:</b>${esc(lesson.doneWhen)}</div>
           <button class="play-btn" data-play>${resuming ? `▶ Back on stage · ${fmtClock(showMs())}` : mins > 0 ? "▶ Play an encore" : "▶ Play the show"}</button>
@@ -537,6 +555,10 @@ function renderTonight() {
           <p>${esc(questFor(t))}</p>
           <button class="btn tiny" id="quest-done">${questDone ? "✓ Done (undo)" : "Done it · +25 XP"}</button>
         </div>
+        ${bonus ? `<div class="paper side-card bonus-card tape"><h3>🎤 Bonus date</h3>
+          <p class="small" style="margin:0 0 6px"><b>${esc(bonus.lesson.title)}</b> @ ${esc(VENUES[bonus.phaseIndex])}</p>
+          <p class="small" style="margin:0 0 10px">Optional singing. Play it whenever you feel like it. It never holds up the tour.</p>
+          <button class="btn tiny red" data-play="${bonus.lesson.id}">${bonusResuming ? "▶ Back on stage" : "▶ Play bonus show"}</button></div>` : ""}
         <div class="paper side-card">
           <h3>This week</h3>
           <div class="week-row">${week}</div>
@@ -554,7 +576,7 @@ function renderTonight() {
 
   // Tour route
   $("#route").innerHTML = `<div class="route-head"><h2 class="display sm" style="margin:0">The tour route</h2>
-    <span class="small">${C.lessonsDone} of ${ALL_LESSONS.length} dates played</span></div>
+    <span class="small">${C.requiredDone} of ${REQUIRED.length} dates played${C.vocalDone ? ` · 🎤 ${C.vocalDone} bonus` : ""}</span></div>
     <div class="route">${PHASES.map((p, i) => {
       const isCur = cur && cur.phase.id === p.id;
       const cls = phaseComplete(p) ? "done" : isCur ? "current" : phaseUnlocked(i) ? "" : "locked";
@@ -574,16 +596,17 @@ function keepOpen(container, draw) {
 
 function renderTour() {
   const cur = currentLesson();
-  $("#tour-intro").textContent = `${PHASES.length} venues, ${ALL_LESSONS.length} dates, about 26 weeks at ${state.settings.dailyGoal} minutes a night (5 of them singing). Play each date until you can pass its test, then tick it off. Some dates take longer than suggested, and that's normal.`;
+  $("#tour-intro").textContent = `${PHASES.length} venues, ${REQUIRED.length} dates plus ${ALL_LESSONS.length - REQUIRED.length} 🎤 bonus singing dates, about 26 weeks at ${state.settings.dailyGoal} minutes a night, plus an optional 5 minutes of singing. Play each date until you can pass its test, then tick it off. Some dates take longer than suggested, and that's normal.`;
   const wrap = $("#tour-legs");
   keepOpen(wrap, () => {
     wrap.innerHTML = PHASES.map((p, i) => {
       const unlocked = phaseUnlocked(i);
-      const n = p.lessons.filter((l) => lessonDone(l.id)).length;
+      const req = p.lessons.filter((l) => !l.vocal), bon = p.lessons.filter((l) => l.vocal);
+      const n = req.filter((l) => lessonDone(l.id)).length, nb = bon.filter((l) => lessonDone(l.id)).length;
       return `<section class="leg paper ${phaseComplete(p) ? "complete" : ""} ${unlocked ? "" : "locked"}" id="leg-${p.id}">
         <div class="leg-head"><div class="leg-num">${pad(i + 1)}</div>
           <div class="leg-name"><div class="display">${esc(VENUES[i])}</div><div class="type">Leg ${i + 1}: ${esc(p.name)} · ${esc(p.weeks)}</div></div>
-          <div class="leg-prog">${n}/${p.lessons.length}</div></div>
+          <div class="leg-prog">${n}/${req.length}${bon.length ? `<div class="small">🎤 ${nb}/${bon.length} bonus</div>` : ""}</div></div>
         <p class="leg-goal">${esc(p.goal)}</p>
         ${unlocked ? "" : `<div class="tba"><span class="display">Dates TBA</span><span class="small">Unlocks when you finish ${esc(VENUES[i - 1])}.</span><button class="btn tiny" data-unlock="${p.id}">I already know this · skip ahead</button></div>`}
         <div class="dates">${p.lessons.map((l, j) => {
@@ -591,12 +614,13 @@ function renderTour() {
           const here = cur && cur.lesson.id === l.id;
           return `<details class="date ${d ? "done" : ""} ${here ? "next" : ""}" data-id="${l.id}" ${here ? "open" : ""}>
             <summary><span class="n">${pad(j + 1)}</span>
-              <span class="t">${here ? `<span class="hl">${esc(l.title)}</span>` : esc(l.title)}${l.vocal ? `<span class="boss sing">🎤 SING</span>` : ""}${l.boss ? `<span class="boss">HEADLINER</span>` : ""}</span>
+              <span class="t">${here ? `<span class="hl">${esc(l.title)}</span>` : esc(l.title)}${l.vocal ? `<span class="boss sing">🎤 BONUS</span>` : ""}${l.boss ? `<span class="boss">HEADLINER</span>` : ""}</span>
               <span class="nights">~${plural(l.days, "night")}</span>
               <span class="st">${d ? `<span class="stamp">Played</span>` : here ? `<span class="stamp">Next up</span>` : ""}</span></summary>
             <div class="date-body">${lessonBodyHTML(l)}
               <div class="song-actions">
                 ${here ? `<button class="btn red" data-play>▶ Play this show</button>` : ""}
+                ${l.vocal && unlocked && !d ? `<button class="btn red" data-play="${l.id}">▶ Play this bonus show</button>` : ""}
                 <button class="btn" data-complete="${l.id}">${d ? `Played ${fmtDate(state.path.done[l.id])} · undo` : "✓ I passed the test"}</button>
               </div></div></details>`;
         }).join("")}</div></section>`;
@@ -647,7 +671,7 @@ function renderDiary() {
   const goal = Number(state.settings.dailyGoal) || 25;
   $("#stats").innerHTML = [
     [C.streak, "Night streak"], [C.best, "Best streak"], [(C.totalMin / 60).toFixed(1), "Hours on stage"],
-    [C.days, "Shows played"], [`${C.lessonsDone}/${ALL_LESSONS.length}`, "Tour dates passed"], [C.learned, "Songs crossed off"],
+    [C.days, "Shows played"], [`${C.requiredDone}/${REQUIRED.length}`, "Tour dates passed"], [C.learned, "Songs crossed off"],
   ].map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
 
   const start = addDays(mondayOf(new Date()), -25 * 7);
@@ -799,12 +823,12 @@ function savePlayer() { try { P ? localStorage.setItem(PLAYER_KEY, JSON.stringif
 const showMs = () => (P ? P.acc + (P.start ? Date.now() - P.start : 0) : 0);
 const stepMs = () => (P ? P.stepAcc + (P.start ? Date.now() - P.stepStart : 0) : 0);
 
-function openPlayer() {
-  const cur = currentLesson();
-  if (!cur) return;
-  if (!P || P.lessonId !== cur.lesson.id || P.mode === "result") {
+function openPlayer(id) {
+  const lesson = id ? lessonById(id) : currentLesson()?.lesson;
+  if (!lesson) return;
+  if (!P || P.lessonId !== lesson.id || P.mode === "result") {
     const n = Date.now();
-    P = { lessonId: cur.lesson.id, mode: "show", step: 0, acc: 0, start: n, stepAcc: 0, stepStart: n, chimed: {}, mood: "", notes: "" };
+    P = { lessonId: lesson.id, mode: "show", step: 0, acc: 0, start: n, stepAcc: 0, stepStart: n, chimed: {}, mood: "", notes: "" };
   } else if (P.mode === "show" && !P.start) {
     P.start = P.stepStart = Date.now();
   }
@@ -914,7 +938,7 @@ function renderPlayer() {
         <div class="show-ctrl">
           <button class="btn" data-p="prev" ${P.step === 0 ? "disabled" : ""}>← Back</button>
           <button class="btn" data-p="pause" id="p-pause">⏸ Pause</button>
-          <button class="btn red" data-p="next">${P.step === n - 1 ? "Finish the show →" : "Next song →"}</button>
+          <button class="btn red" data-p="next">${P.step === n - 1 ? "Finish the show →" : isOptional(l.steps[P.step]) ? "Skip vocals →" : "Next song →"}</button>
         </div>
         <div class="show-setlist">${l.steps.map(([m, t], j) => `<button data-p="goto" data-i="${j}" class="${j < P.step ? "done" : j === P.step ? "now" : ""}">
           <b>${j + 1}. ${stepLabel(l.steps, j)} · ${m}′</b>${esc(t.length > 64 ? t.slice(0, 62) + "…" : t)}</button>`).join("")}</div>
@@ -1316,7 +1340,7 @@ function bind() {
       setTimeout(() => document.getElementById(`leg-${el.dataset.leg}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
       return;
     }
-    if (q("[data-play]")) { openPlayer(); return; }
+    if ((el = q("[data-play]"))) { openPlayer(el.dataset.play || null); return; }
     if ((el = q("[data-pg-mode]"))) { startGame(el.dataset.pgMode); $("#pg-game").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     if ((el = q("[data-pg]"))) {
       const a = el.dataset.pg;

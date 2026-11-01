@@ -1,6 +1,6 @@
 /* Offline support: the app shell is cached so it opens with no signal.
    Network-first for the app's own files, so updates show up as soon as you're online. */
-const CACHE = "bonsen-v3";
+const CACHE = "bonsen-v4";
 const SHELL = [
   "./", "index.html", "style.css", "app.js", "curriculum.js", "library.js",
   "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",

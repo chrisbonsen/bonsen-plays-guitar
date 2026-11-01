@@ -557,3 +557,5 @@ main { padding-bottom: max(80px, env(safe-area-inset-bottom)); }
 .player .pg-note sub { color: #8f877c; }
 .player .metro .hint { margin-top: 8px; }
 .pg-bars .bar { max-width: 34px; }
+.bonus-card { transform: rotate(-1.2deg); border-style: dashed; }
+.leg-prog .small { font-family: var(--type); font-size: .7rem; }
